@@ -71,17 +71,15 @@ module i4004 (
                 stack[i] <= 'b0;
             end
         end
-        else begin
-            if (instr_reg[7:4] == `OP_JMS) begin
-                stack[0] <= program_counter;
-                stack[1] <= stack[0];
-                stack[2] <= stack[1];
-            end
-            else if (instr_reg[7:4] == `OP_NOP && opr == `OP_BBL) begin
-                stack[2] <= 'b0;
-                stack[1] <= stack[2];
-                stack[0] <= stack[1];
-            end
+        else if (instr_reg[7:4] == `OP_JMS) begin
+            stack[0] <= program_counter;
+            stack[1] <= stack[0];
+            stack[2] <= stack[1];
+        end
+        else if (instr_reg[7:4] == `OP_NOP && opr == `OP_BBL) begin
+            stack[2] <= 'b0;
+            stack[1] <= stack[2];
+            stack[0] <= stack[1];
         end
     end
 
@@ -108,15 +106,15 @@ module i4004 (
     always @(posedge sync or negedge reset) begin
         if (~reset)
             instr_reg <= 'b0;
-        else if (instr_reg == 'b0 && 
-                (opr == `OP_JCN ||
-                 opr == `OP_FIM ||
-                 opr == `OP_SRC ||
-                 opr == `OP_FIN ||
-                 opr == `OP_JUN ||
-                 opr == `OP_JMS ||
-                 opr == `OP_ISZ)
-        )
+        else if (instr_reg == 'b0 && (
+                    opr == `OP_JCN ||
+                    opr == `OP_FIM ||
+                    opr == `OP_SRC ||
+                    opr == `OP_FIN ||
+                    opr == `OP_JUN ||
+                    opr == `OP_JMS ||
+                    opr == `OP_ISZ
+        ))
             instr_reg <= {opr, opa};
         else
             instr_reg <= 'b0;
@@ -157,24 +155,28 @@ module i4004 (
             accumulater <= 'b0;
             carry <= 'b0;
         end
-        else if (instr_reg == 'b0 && opr == `OP_ADD) begin
+        else if (instr_reg == 'b0 && opr == `OP_ADD)
             {carry, accumulater} <= index_reg[opa] + accumulater + carry;
-        end
-        else if (instr_reg == 'b0 && opr == `OP_SUB) begin
+        else if (instr_reg == 'b0 && opr == `OP_SUB)
             {carry, accumulater} <= index_reg[opa] - accumulater - carry;
-        end
-        else if (instr_reg == 'b0 && opr == `OP_LD) begin
+        else if (instr_reg == 'b0 && opr == `OP_LD)
             accumulater <= index_reg[opa];
-        end
-        else if (instr_reg == 'b0 && opr == `OP_XCH) begin
+        else if (instr_reg == 'b0 && opr == `OP_XCH)
             accumulater <= index_reg[opa];
-        end
-        else if (instr_reg == 'b0 && opr == `OP_BBL) begin
+        else if (instr_reg == 'b0 && opr == `OP_BBL)
             accumulater <= opa;
-        end
-        else if (instr_reg == 'b0 && opr == `OP_LDM) begin
+        else if (instr_reg == 'b0 && opr == `OP_LDM)
             accumulater <= opa;
-        end
+        else if (opr == `OP_IOR && opa == `FN_SBM)
+            {carry, accumulater} <= -data + accumulater - carry;
+        else if (opr == `OP_IOR && opa == `FN_RDM)
+            accumulater <= data;
+        else if (opr == `OP_IOR && opa == `FN_RDR)
+            accumulater <= data;
+        else if (opr == `OP_IOR && opa == `FN_ADM)
+            {carry, accumulater} <= data + accumulater + carry;
+        else if (opr == `OP_IOR && (opa == `FN_RD0 || opa == `FN_RD1 || opa == `FN_RD2 || opa == `FN_RD3))
+            accumulater <= data;
     end
 
     always @(*) begin
@@ -202,6 +204,16 @@ module i4004 (
         else if (E2) begin
             if (instr_reg == 'b0 && opr == `OP_SRC && (opa & `FN_MSK) == `FN_SRC)
                 data = index_reg[{opa[3:1], 1'b0}];
+            else if (opr == `OP_IOR && (
+                        opa == `FN_WRM ||
+                        opa == `FN_WMP ||
+                        opa == `FN_WRR ||
+                        opa == `FN_WR0 ||
+                        opa == `FN_WR1 ||
+                        opa == `FN_WR2 ||
+                        opa == `FN_WR3 ||
+            ))
+                data = accumulater;
             else
                 data = 4'bzzzz;
         end
