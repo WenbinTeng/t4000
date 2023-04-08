@@ -167,17 +167,61 @@ module i4004 (
             accumulater <= opa;
         else if (instr_reg == 'b0 && opr == `OP_LDM)
             accumulater <= opa;
-        else if (opr == `OP_IOR && opa == `FN_SBM)
+        else if (instr_reg == `OP_SRC && opr == `OP_IOR && opa == `FN_SBM)
             {carry, accumulater} <= -data + accumulater - carry;
-        else if (opr == `OP_IOR && opa == `FN_RDM)
+        else if (instr_reg == `OP_SRC && opr == `OP_IOR && opa == `FN_RDM)
             accumulater <= data;
-        else if (opr == `OP_IOR && opa == `FN_RDR)
+        else if (instr_reg == `OP_SRC && opr == `OP_IOR && opa == `FN_RDR)
             accumulater <= data;
-        else if (opr == `OP_IOR && opa == `FN_ADM)
+        else if (instr_reg == `OP_SRC && opr == `OP_IOR && opa == `FN_ADM)
             {carry, accumulater} <= data + accumulater + carry;
-        else if (opr == `OP_IOR && (opa == `FN_RD0 || opa == `FN_RD1 || opa == `FN_RD2 || opa == `FN_RD3))
+        else if (instr_reg == `OP_SRC && opr == `OP_IOR && (opa == `FN_RD0 || opa == `FN_RD1 || opa == `FN_RD2 || opa == `FN_RD3))
             accumulater <= data;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_CLB)
+            {carry, accumulater} <= 'b0;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_CLC)
+            carry <= 0;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_IAC)
+            accumulater <= accumulater + 'b1;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_CMC)
+            carry <= ~carry;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_CMA)
+            accumulater <= ~accumulater;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_RAL)
+            {carry, accumulater} <= {accumulater, carry};
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_RAR)
+            {accumulater, carry} <= {carry, accumulater};
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_TCC)
+            {carry, accumulater} <= {4'b0, carry};
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_DAC)
+            accumulater <= accumulater - 'b1;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_TCS)
+            {carry, accumulater} <= {1'b0, carry ? 4'b1010 : 4'b1001};
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_STC)
+            carry <= 'b1;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_DAA)
+            {carry, accumulater} <= accumulater + (carry || accumulater >= 4'b1010 ? 4'b0110 : 4'b0000);
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_KBP)
+            accumulater <= (
+                accumulater == 4'b0000 ||
+                accumulater == 4'b0001 ||
+                accumulater == 4'b0010 ||
+                accumulater == 4'b0100 ||
+                accumulater == 4'b1000
+            ) ? accumulater : 4'b1111;
     end
+
+    reg [3:0] cm_ram_reg;
+
+    always @(negedge E2 or negedge reset) begin
+        if (~reset)
+            cm_ram_reg <= 'b0;
+        else if (instr_reg == 'b0 && opr == `OP_ACC && opa == `FN_DCL)
+            cm_ram_reg <= accumulater;
+    end
+
+    assign cm_ram = cm_ram_reg;
+    assign cm_rom = 1'b1;
 
     always @(*) begin
         if (~reset) begin
