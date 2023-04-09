@@ -18,7 +18,7 @@ module i4003 (
     end
 
     always @(negedge cp) begin
-        delay <= shift_reg[9];
+        delay_reg <= shift_reg[9];
     end
 
     assign s_out = delay_reg;
