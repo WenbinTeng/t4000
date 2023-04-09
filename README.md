@@ -6,7 +6,7 @@
 
 This is a repository for a computing system based on Intel MCS-4 (in memory of Gordon Moore on 2023-03-24), comprising four 4000 series components, namely 4001 ROM, 4002 RAM, 4003 SR, and 4004 CPU. The instruction set in MCS-4 allows both binary and decimal arithmetic, including conditional branching, jump to subroutine, and indirect fetching. The manual can be found in [there](asset/Intel_MCS-4_Data_Sheet.pdf).
 
-![post](asset\post.jpg)
+![poster](asset/poster.jpg)
 
 ## Introduction
 
@@ -42,19 +42,19 @@ The 4004 is a central processor unit (CPU) designed to work in conjunction with 
 
 The MCS-4 has a very powerful Instruction Set that allows both binary and decimal arithmetic. It includes conditional branching, jump to subroutine and provides for the efficient use of ROM look up tables by indirect fetching. Typically, two 8 digit numbers can be added in 850 usec.
 
-![isa1](asset\isa1.jpg)
+![isa1](asset/isa1.jpg)
 
-![isa2](asset\isa2.jpg)
+![isa2](asset/isa2.jpg)
 
-![isa3](asset\isa3.jpg)
+![isa3](asset/isa3.jpg)
 
-⚠️**warning**: We transfer the address transmission of the FIN instruction to A2 and A3 period for the sake of design complexity reduction (itstill spend 2 instruction cycles).
+⚠️**Warning**: We transfer the address transmission operation of the FIN instruction to A2 and A3 period for the sake of design complexity reduction (it still spend 2 instruction cycles).
 
 
 
 ## System Architecture
 
-![sys](asset\sys.jpg)
+![sys](asset/sys.jpg)
 
 ## Reference
 
