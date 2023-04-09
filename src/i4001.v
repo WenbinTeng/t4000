@@ -1,3 +1,5 @@
+`include "def.v"
+
 module i4001 #(
     parameter ID = 0
 ) (
@@ -37,11 +39,11 @@ module i4001 #(
     reg [11:0] address_reg;
 
     always @(negedge A1 or negedge reset)
-        address_reg[3:0] <= reset ? data : 'b0;
+        address_reg[3:0] <= ~reset ? 'b0 : data;
     always @(negedge A2 or negedge reset)
-        address_reg[7:4] <= reset ? data : 'b0;
+        address_reg[7:4] <= ~reset ? 'b0 : data;
     always @(negedge A3 or negedge reset)
-        address_reg[11:8] <= reset ? data : 'b0;
+        address_reg[11:8] <= ~reset ? 'b0 : data;
 
     // TODO: metal option
     wire enable = cm && (address_reg[11:8] == ID);
@@ -49,12 +51,12 @@ module i4001 #(
     reg [3:0] opr;
 
     always @(negedge M1 or negedge reset)
-        opr <= reset ? data : 'b0;
+        opr <= ~reset ? 'b0 : data;
 
     reg [3:0] opa;
 
     always @(negedge M2 or negedge reset)
-        opa <= reset ? data : 'b0;
+        opa <= ~reset ? 'b0 : data;
 
     reg [7:0] instr_reg;
 
@@ -82,26 +84,34 @@ module i4001 #(
             output_reg <= data;
     end
 
-    always @(*) begin
-        if (~reset)
-            io <= 4'bzzzz;
-        else if (enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && opa == `FN_RDR)
-            io <= 4'bzzzz;
-        else
-            io <= output_reg;
-    end
+    reg [3:0] io_signal;
 
     always @(*) begin
         if (~reset)
-            data = 4'bzzzz;
-        else if (M1)
-            data = enable ? rom_array[address_reg[7:0]][7:4] : 4'bzzzz;
-        else if (M2)
-            data = enable ? rom_array[address_reg[7:0]][3:0] : 4'bzzzz;
-        else if (E2 && enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && opa == `FN_RDR)
-            data = io;
+            io_signal = 4'bzzzz;
+        else if (enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && opa == `FN_RDR)
+            io_signal = 4'bzzzz;
         else
-            data = 4'bzzzz;
+            io_signal = output_reg;
     end
+
+    assign io = io_signal;
+
+    reg [3:0] data_signal;
+
+    always @(*) begin
+        if (~reset)
+            data_signal = 4'bzzzz;
+        else if (M1)
+            data_signal = enable ? rom_array[address_reg[7:0]][7:4] : 4'bzzzz;
+        else if (M2)
+            data_signal = enable ? rom_array[address_reg[7:0]][3:0] : 4'bzzzz;
+        else if (E2 && enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && opa == `FN_RDR)
+            data_signal = io;
+        else
+            data_signal = 4'bzzzz;
+    end
+
+    assign data = data_signal;
 
 endmodule
