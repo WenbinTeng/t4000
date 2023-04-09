@@ -50,7 +50,7 @@ module i4004 (
         else if (instr_reg == 'b0 && opr == `OP_FIN && (opa & `FN_MSK) == `FN_FIN)
             program_counter <= program_counter;
         else if (instr_reg == 'b0 && opr == `OP_JIN && (opa & `FN_MSK) == `FN_JIN)
-            program_counter <= {program_counter[11:8], index_reg[opa[3:1], 1'b0], index_reg[opa[3:1], 1'b1]};
+            program_counter <= {program_counter[11:8], index_reg[{opa[3:1], 1'b0}], index_reg[{opa[3:1], 1'b1}]};
         else if (instr_reg[7:4] == `OP_JUN)
             program_counter <= {instr_reg[3:0], opr, opa};
         else if (instr_reg[7:4] == `OP_JMS)
@@ -223,31 +223,33 @@ module i4004 (
     assign cm_ram = cm_ram_reg;
     assign cm_rom = 1'b1;
 
+    reg [3:0] data_signal;
+
     always @(*) begin
         if (~reset) begin
-            data = 4'bzzzz;
+            data_signal = 4'bzzzz;
         end
         else if (A1) begin
             if (instr_reg == 'b0 && opr == `OP_FIN && (opa & `FN_MSK) == `FN_FIN)
-                data = index_reg[1];
+                data_signal = index_reg[1];
             else
-                data = program_counter[3:0];
+                data_signal = program_counter[3:0];
         end
         else if (A2) begin
             if (instr_reg == 'b0 && opr == `OP_FIN && (opa & `FN_MSK) == `FN_FIN)
-                data = index_reg[0];
+                data_signal = index_reg[0];
             else
-                data = program_counter[7:4];
+                data_signal = program_counter[7:4];
         end
         else if (A3) begin
-            data = program_counter[11:8];
+            data_signal = program_counter[11:8];
         end
         else if (E1) begin
-            data = opa;
+            data_signal = opa;
         end
         else if (E2) begin
             if (instr_reg == 'b0 && opr == `OP_SRC && (opa & `FN_MSK) == `FN_SRC)
-                data = index_reg[{opa[3:1], 1'b0}];
+                data_signal = index_reg[{opa[3:1], 1'b0}];
             else if (opr == `OP_IOR && (
                         opa == `FN_WRM ||
                         opa == `FN_WMP ||
@@ -255,21 +257,23 @@ module i4004 (
                         opa == `FN_WR0 ||
                         opa == `FN_WR1 ||
                         opa == `FN_WR2 ||
-                        opa == `FN_WR3 ||
+                        opa == `FN_WR3
             ))
-                data = accumulater;
+                data_signal = accumulater;
             else
-                data = 4'bzzzz;
+                data_signal = 4'bzzzz;
         end
         else if (E3) begin
             if (instr_reg == 'b0 && opr == `OP_SRC && (opa & `FN_MSK) == `FN_SRC)
-                data = index_reg[{opa[3:1], 1'b1}];
+                data_signal = index_reg[{opa[3:1], 1'b1}];
             else
-                data = 4'bzzzz;
+                data_signal = 4'bzzzz;
         end
         else begin
-            data = 4'bzzzz;
+            data_signal = 4'bzzzz;
         end
     end
     
+    assign data = data_signal;
+
 endmodule
