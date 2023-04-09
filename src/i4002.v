@@ -37,11 +37,11 @@ module i4002 #(
     reg [11:0] address_reg;
 
     always @(negedge A1 or negedge reset)
-        address_reg[3:0] <= reset ? data : 'b0;
+        address_reg[3:0] <= ~reset ? 'b0 : data;
     always @(negedge A2 or negedge reset)
-        address_reg[7:4] <= reset ? data : 'b0;
+        address_reg[7:4] <= ~reset ? 'b0 : data;
     always @(negedge A3 or negedge reset)
-        address_reg[11:8] <= reset ? data : 'b0;
+        address_reg[11:8] <= ~reset ? 'b0 : data;
 
     // TODO: metal option
     wire enable = cm && (address_reg[11:10] == ID);
@@ -49,12 +49,12 @@ module i4002 #(
     reg [3:0] opr;
 
     always @(negedge M1 or negedge reset)
-        opr <= reset ? data : 'b0;
+        opr <= ~reset ? 'b0 : data;
 
     reg [3:0] opa;
 
     always @(negedge M2 or negedge reset)
-        opa <= reset ? data : 'b0;
+        opa <= ~reset ? 'b0 : data;
 
     reg [7:0] instr_reg;
 
@@ -117,22 +117,30 @@ module i4002 #(
             output_reg <= data;
     end
 
-    always @(*) begin
-        if (~reset)
-            out <= 4'bzzzz;
-        else
-            out <= output_reg;
-    end
+    reg [3:0] out_signal;
 
     always @(*) begin
         if (~reset)
-            data = 4'bzzzz;
-        else if (E2 && enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && (opa == `FN_SBM || opa == `FN_RDM || opa == `FN_ADM))
-            data = memory_array[src_reg[5:0]];
-        else if (E2 && enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && opa[3:2] == 2'b11)
-            data = status_array[{src_reg[5:4], opa[1:0]}];
+            out_signal = 4'bzzzz;
         else
-            data = 4'bzzzz;
+            out_signal = output_reg;
     end
+
+    assign out = out_signal;
+
+    reg [3:0] data_signal;
+
+    always @(*) begin
+        if (~reset)
+            data_signal = 4'bzzzz;
+        else if (E2 && enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && (opa == `FN_SBM || opa == `FN_RDM || opa == `FN_ADM))
+            data_signal = memory_array[src_reg[5:0]];
+        else if (E2 && enable && instr_reg[7:4] == `OP_SRC && opr == `OP_IOR && opa[3:2] == 2'b11)
+            data_signal = status_array[{src_reg[5:4], opa[1:0]}];
+        else
+            data_signal = 4'bzzzz;
+    end
+
+    assign data = data_signal;
 
 endmodule
